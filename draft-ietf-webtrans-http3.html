@@ -16,17 +16,17 @@ a WebTransport protocol that is based on HTTP/3   and provides
 support for unidirectional streams, bidirectional streams and datagrams, all
 multiplexed within the same HTTP/3 connection. 
     " name="description">
-<meta content="xml2rfc 3.20.1" name="generator">
+<meta content="xml2rfc 3.21.0" name="generator">
 <meta content="draft-ietf-webtrans-http3-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.20.1
-    Python 3.11.8
+  xml2rfc 3.21.0
+    Python 3.11.9
     ConfigArgParse 1.7
     google-i18n-address 3.1.0
     intervaltree 3.1.0
     Jinja2 3.1.2
     lxml 4.9.3
-    platformdirs 4.2.0
+    platformdirs 4.2.1
     pycountry 22.3.5
     PyYAML 6.0.1
     requests 2.31.0
@@ -1031,11 +1031,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">WebTransport-H3</td>
-<td class="right">April 2024</td>
+<td class="right">May 2024</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Frindell, et al.</td>
-<td class="center">Expires 18 October 2024</td>
+<td class="center">Expires 15 November 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1048,12 +1048,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-webtrans-http3-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-04-16" class="published">16 April 2024</time>
+<time datetime="2024-05-14" class="published">14 May 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-10-18">18 October 2024</time></dd>
+<dd class="expires"><time datetime="2024-11-15">15 November 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1112,7 +1112,7 @@ web API draft corresponding to this document can be found at
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 18 October 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 15 November 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1195,6 +1195,9 @@ web API draft corresponding to this document can be found at
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6">
                 <p id="section-toc.1-1.4.2.6.1"><a href="#section-4.6" class="auto internal xref">4.6</a>.  <a href="#name-interaction-with-http-3-goa" class="internal xref">Interaction with HTTP/3 GOAWAY frame</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.7">
+                <p id="section-toc.1-1.4.2.7.1"><a href="#section-4.7" class="auto internal xref">4.7</a>.  <a href="#name-use-of-keying-material-expo" class="internal xref">Use of Keying Material Exporters</a></p>
 </li>
             </ul>
 </li>
@@ -1731,6 +1734,36 @@ streams.  The signal is intended for the application using WebTransport, which
 is expected to attempt to gracefully terminate the session as soon as possible.<a href="#section-4.6-5" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="use-of-keying-material-exporters">
+<section id="section-4.7">
+        <h3 id="name-use-of-keying-material-expo">
+<a href="#section-4.7" class="section-number selfRef">4.7. </a><a href="#name-use-of-keying-material-expo" class="section-name selfRef">Use of Keying Material Exporters</a>
+        </h3>
+<p id="section-4.7-1">WebTransport over HTTP/3 supports the use of TLS keying material exporters
+<span>[<a href="#RFC8446" class="cite xref">RFC8446</a>], <a href="https://rfc-editor.org/rfc/rfc8446#section-7.5" class="relref">Section 7.5</a></span>.  Since the underlying QUIC connection may be shared by multiple
+WebTransport sessions, WebTransport defines its own mechanism for deriving a
+TLS exporter that separates keying material for different sessions.  If the
+user requests an exporter for a given WebTransport session with a specified
+label and context, the resulting exporter SHALL be a TLS exporter as defined in
+<span>[<a href="#RFC8446" class="cite xref">RFC8446</a>], <a href="https://rfc-editor.org/rfc/rfc8446#section-7.5" class="relref">Section 7.5</a></span> with the label set to "EXPORTER-WebTransport" and the
+context set to the serialization of the "WebTransport Exporter Context" struct
+as defined below.<a href="#section-4.7-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.7-2">
+<pre>
+WebTransport Exporter Context {
+  WebTransport Session ID (64),
+  WebTransport Application-Supplied Exporter Label Length (8),
+  WebTransport Application-Supplied Exporter Label (8..),
+  WebTransport Application-Supplied Exporter Context Length (8),
+  WebTransport Application-Supplied Exporter Context (..)
+}
+</pre><a href="#section-4.7-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4.7-3">A TLS exporter API might permit the context field to be omitted. In this case,
+as with TLS 1.3, the WebTransport Application-Supplied Exporter Context
+becomes zero-length if omitted.<a href="#section-4.7-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="session-termination">
@@ -2212,6 +2245,10 @@ by <span>[<a href="#HTTP-DATAGRAM" class="cite xref">HTTP-DATAGRAM</a>]</span>:<
 <dt id="RFC8441">[RFC8441]</dt>
         <dd>
 <span class="refAuthor">McManus, P.</span>, <span class="refTitle">"Bootstrapping WebSockets with HTTP/2"</span>, <span class="seriesInfo">RFC 8441</span>, <span class="seriesInfo">DOI 10.17487/RFC8441</span>, <time datetime="2018-09" class="refDate">September 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8441">https://www.rfc-editor.org/rfc/rfc8441</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8446">[RFC8446]</dt>
+        <dd>
+<span class="refAuthor">Rescorla, E.</span>, <span class="refTitle">"The Transport Layer Security (TLS) Protocol Version 1.3"</span>, <span class="seriesInfo">RFC 8446</span>, <span class="seriesInfo">DOI 10.17487/RFC8446</span>, <time datetime="2018-08" class="refDate">August 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8446">https://www.rfc-editor.org/rfc/rfc8446</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8941">[RFC8941]</dt>
         <dd>

@@ -5,10 +5,10 @@
 Network Working Group                                        A. Frindell
 Internet-Draft                                                  Facebook
 Intended status: Standards Track                              E. Kinnear
-Expires: 18 October 2024                                      Apple Inc.
+Expires: 15 November 2024                                     Apple Inc.
                                                              V. Vasiliev
                                                                   Google
-                                                           16 April 2024
+                                                             14 May 2024
 
 
                         WebTransport over HTTP/3
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 18 October 2024.
+   This Internet-Draft will expire on 15 November 2024.
 
 Copyright Notice
 
@@ -84,6 +84,7 @@ Table of Contents
      4.4.  Datagrams
      4.5.  Buffering Incoming Streams and Datagrams
      4.6.  Interaction with HTTP/3 GOAWAY frame
+     4.7.  Use of Keying Material Exporters
    5.  Session Termination
    6.  Considerations for Future Versions
      6.1.  Negotiating the Draft Version
@@ -554,6 +555,31 @@ Table of Contents
    application using WebTransport, which is expected to attempt to
    gracefully terminate the session as soon as possible.
 
+4.7.  Use of Keying Material Exporters
+
+   WebTransport over HTTP/3 supports the use of TLS keying material
+   exporters [RFC8446], Section 7.5.  Since the underlying QUIC
+   connection may be shared by multiple WebTransport sessions,
+   WebTransport defines its own mechanism for deriving a TLS exporter
+   that separates keying material for different sessions.  If the user
+   requests an exporter for a given WebTransport session with a
+   specified label and context, the resulting exporter SHALL be a TLS
+   exporter as defined in [RFC8446], Section 7.5 with the label set to
+   "EXPORTER-WebTransport" and the context set to the serialization of
+   the "WebTransport Exporter Context" struct as defined below.
+
+   WebTransport Exporter Context {
+     WebTransport Session ID (64),
+     WebTransport Application-Supplied Exporter Label Length (8),
+     WebTransport Application-Supplied Exporter Label (8..),
+     WebTransport Application-Supplied Exporter Context Length (8),
+     WebTransport Application-Supplied Exporter Context (..)
+   }
+
+   A TLS exporter API might permit the context field to be omitted.  In
+   this case, as with TLS 1.3, the WebTransport Application-Supplied
+   Exporter Context becomes zero-length if omitted.
+
 5.  Session Termination
 
    A WebTransport session over HTTP/3 is considered terminated when
@@ -861,6 +887,10 @@ Table of Contents
    [RFC8441]  McManus, P., "Bootstrapping WebSockets with HTTP/2",
               RFC 8441, DOI 10.17487/RFC8441, September 2018,
               <https://www.rfc-editor.org/rfc/rfc8441>.
+
+   [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
+              Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
+              <https://www.rfc-editor.org/rfc/rfc8446>.
 
    [RFC8941]  Nottingham, M. and P. Kamp, "Structured Field Values for
               HTTP", RFC 8941, DOI 10.17487/RFC8941, February 2021,
