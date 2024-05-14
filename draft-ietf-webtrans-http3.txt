@@ -69,7 +69,10 @@ Table of Contents
 
    1.  Introduction
      1.1.  Terminology
-   2.  Protocol Overview
+   2.  Overview
+     2.1.  QUIC, WebTransport, and HTTP/3
+       2.1.1.  Minimizing Implementation Complexity
+     2.2.  Protocol Overview
    3.  Session Establishment
      3.1.  Establishing a Transport-Capable HTTP/3 Connection
      3.2.  Extended CONNECT in HTTP/3
@@ -128,7 +131,81 @@ Table of Contents
    an application that accepts WebTransport sessions, which can be
    accessed via an HTTP/3 server.
 
-2.  Protocol Overview
+2.  Overview
+
+2.1.  QUIC, WebTransport, and HTTP/3
+
+   QUIC version 1 [RFC9000] is a secure transport protocol with flow
+   control and congestion control.  QUIC supports application data
+   exchange via streams; reliable and ordered byte streams that can be
+   multiplexed.  Stream independence can mitigate head-of-line blocking.
+   While QUIC provides streams as a transport service, it is
+   unopinionated about their usage.  The applicability of streams is
+   described by section 4 of [RFC9308].
+
+   HTTP is an application-layer protocol, defined by "HTTP Semantics"
+   [RFC9110].  HTTP/3 is the application mapping for QUIC, defined in
+   [RFC9114].  It describes how QUIC streams are used to carry control
+   data or HTTP request and response message sequences in the form of
+   frames and describes details of stream and connection lifecycle
+   management.  HTTP/3 offers two features in addition to HTTP
+   Semantics: QPACK header compression [RFC9208] and Server Push
+   Section 4.6 of [RFC9114].
+
+   WebTransport session establishment involves interacting at the HTTP
+   layer with a resource.  For Web user agents, this interaction is
+   important for security reasons, especially to ensure that the
+   resource is willing to use WebTransport.
+
+   Although WebTransport requires HTTP for its handshake, when HTTP/3 is
+   in use, HTTP is not used for anything else related to an established
+   session.  Instead, QUIC streams begin with a header sequence of bytes
+   that links them to the established session.  The remainder of the
+   stream is the body, which carries the payload supplied by the
+   application using WebTransport.  This process is similar to
+   WebSockets over HTTP/1.1 [ORIGIN], where access to the underlying
+   byte stream is enabled after both sides have completed the handshake.
+
+   The layering of QUIC, HTTP/3, and WebTransport is shown in Figure 1.
+   Once a WebTransport session is established, applications have nearly
+   direct access to QUIC.
+
+   ,--------------------------------,
+   |            WebTransport        |
+   ,----------------,---------------,
+   | HTTP Semantics |               |
+   |      and       |               |
+   | Session Setup  | Nearly direct |
+   ,----------------,               |
+   |     HTTP/3     |               |
+   ,----------------`---------------,
+   |               QUIC             |
+   `--------------------------------'
+
+                      Figure 1: WebTransport Layering
+
+2.1.1.  Minimizing Implementation Complexity
+
+   WebTransport has minimal interaction with HTTP and HTTP/3.  Clients
+   or servers can constrain their use of features to only those required
+   to complete a WebTransport handshake:
+
+   *  Generating/parsing the request method, host, path, protocol,
+      optional Origin header, and perhaps some extra headers.
+
+   *  Generating/parsing the response status code, and possibly some
+      extra headers.
+
+   The receiver can likely perform several of its HTTP-level
+   requirements using bytestring comparisons.
+
+   While HTTP/3 encodes HTTP messages using QPACK, the complexity can be
+   minimized.  Receivers can disable dynamic decompression entirely but
+   must always support static decompression and Huffman decoding.
+   Senders can opt to never use dynamic compression, static compression,
+   or Huffman encoding.
+
+2.2.  Protocol Overview
 
    WebTransport servers in general are identified by a pair of authority
    value and path value (defined in [RFC3986] Sections 3.2 and 3.3
@@ -382,7 +459,7 @@ Table of Contents
    HTTP/3 unidirectional stream type SHALL be 0x54.  The body of the
    stream SHALL be the stream type, followed by the session ID, encoded
    as a variable-length integer, followed by the user-specified stream
-   data (Figure 1).
+   data (Figure 2).
 
    Unidirectional Stream {
        Stream Type (i) = 0x54,
@@ -390,7 +467,7 @@ Table of Contents
        Stream Body (..)
    }
 
-            Figure 1: Unidirectional WebTransport stream format
+            Figure 2: Unidirectional WebTransport stream format
 
 4.2.  Bidirectional Streams
 
@@ -417,7 +494,7 @@ Table of Contents
    bidirectional WebTransport stream.  Following this is the associated
    session ID, encoded as a variable-length integer; the rest of the
    stream is the application payload of the WebTransport stream
-   (Figure 2).
+   (Figure 3).
 
    Bidirectional Stream {
        Signal Value (i) = 0x41,
@@ -425,7 +502,7 @@ Table of Contents
        Stream Body (..)
    }
 
-             Figure 2: Bidirectional WebTransport stream format
+             Figure 3: Bidirectional WebTransport stream format
 
    This document reserves the special signal value 0x41 as a
    WEBTRANSPORT_STREAM frame type.  While it is registered as an HTTP/3
@@ -458,7 +535,7 @@ Table of Contents
    skipped when mapping the error codes (i.e. the two HTTP/3 error
    codepoints adjacent to a reserved codepoint would map to two adjacent
    WebTransport application error codepoints).  An example pseudocode
-   can be seen in Figure 3.
+   can be seen in Figure 4.
 
        first = 0x52e4a40fa8db
        last = 0x52e5ac983162
@@ -472,7 +549,7 @@ Table of Contents
            shifted = h - first
            return shifted - floor(shifted / 0x1f)
 
-          Figure 3: Pseudocode for converting between WebTransport
+          Figure 4: Pseudocode for converting between WebTransport
                  application errors and HTTP/3 error codes
 
    WebTransport data streams are associated with sessions through a
@@ -901,6 +978,14 @@ Table of Contents
               DOI 10.17487/RFC9000, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9000>.
 
+   [RFC9110]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
+              Ed., "HTTP Semantics", STD 97, RFC 9110,
+              DOI 10.17487/RFC9110, June 2022,
+              <https://www.rfc-editor.org/rfc/rfc9110>.
+
+   [RFC9114]  Bishop, M., Ed., "HTTP/3", RFC 9114, DOI 10.17487/RFC9114,
+              June 2022, <https://www.rfc-editor.org/rfc/rfc9114>.
+
    [RFC9218]  Oku, K. and L. Pardue, "Extensible Prioritization Scheme
               for HTTP", RFC 9218, DOI 10.17487/RFC9218, June 2022,
               <https://www.rfc-editor.org/rfc/rfc9218>.
@@ -918,10 +1003,22 @@ Table of Contents
               4 March 2024, <https://datatracker.ietf.org/doc/html/
               draft-ietf-webtrans-http2-08>.
 
+   [ORIGIN]   Fette, I. and A. Melnikov, "The WebSocket Protocol",
+              RFC 6455, DOI 10.17487/RFC6455, December 2011,
+              <https://www.rfc-editor.org/rfc/rfc6455>.
+
    [RFC7301]  Friedl, S., Popov, A., Langley, A., and E. Stephan,
               "Transport Layer Security (TLS) Application-Layer Protocol
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
               July 2014, <https://www.rfc-editor.org/rfc/rfc7301>.
+
+   [RFC9208]  Melnikov, A., "IMAP QUOTA Extension", RFC 9208,
+              DOI 10.17487/RFC9208, March 2022,
+              <https://www.rfc-editor.org/rfc/rfc9208>.
+
+   [RFC9308]  Kühlewind, M. and B. Trammell, "Applicability of the QUIC
+              Transport Protocol", RFC 9308, DOI 10.17487/RFC9308,
+              September 2022, <https://www.rfc-editor.org/rfc/rfc9308>.
 
 Appendix A.  Changelog
 
