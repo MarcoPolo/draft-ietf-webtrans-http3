@@ -5,10 +5,10 @@
 Network Working Group                                        A. Frindell
 Internet-Draft                                                  Facebook
 Intended status: Standards Track                              E. Kinnear
-Expires: 15 November 2024                                     Apple Inc.
+Expires: 13 December 2024                                     Apple Inc.
                                                              V. Vasiliev
                                                                   Google
-                                                             14 May 2024
+                                                            11 June 2024
 
 
                         WebTransport over HTTP/3
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 November 2024.
+   This Internet-Draft will expire on 13 December 2024.
 
 Copyright Notice
 
@@ -715,8 +715,8 @@ Table of Contents
    receive the CONNECTION_CLOSE before receiving the
    CLOSE_WEBTRANSPORT_SESSION, thus never receiving the application
    error data contained in the latter.  To avoid this, the endpoint
-   SHOULD wait until all of the data on the CONNECT stream is
-   acknowledged before sending the CONNECTION_CLOSE; this gives
+   SHOULD wait until all CONNECT streams have been closed by the peer
+   before sending the CONNECTION_CLOSE; this gives
    CLOSE_WEBTRANSPORT_SESSION properties similar to that of the QUIC
    CONNECTION_CLOSE mechanism as a best-effort mechanism of delivering
    application close metadata.
