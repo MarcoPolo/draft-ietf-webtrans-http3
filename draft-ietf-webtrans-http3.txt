@@ -5,10 +5,10 @@
 Network Working Group                                        A. Frindell
 Internet-Draft                                                  Facebook
 Intended status: Standards Track                              E. Kinnear
-Expires: 13 December 2024                                     Apple Inc.
+Expires: 10 January 2025                                      Apple Inc.
                                                              V. Vasiliev
                                                                   Google
-                                                            11 June 2024
+                                                             9 July 2024
 
 
                         WebTransport over HTTP/3
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 13 December 2024.
+   This Internet-Draft will expire on 10 January 2025.
 
 Copyright Notice
 
@@ -283,6 +283,11 @@ Table of Contents
    To indicate support, both the client and the server MUST send a
    max_datagram_frame_size transport parameter with a value greater than
    0 (see Section 3 of [QUIC-DATAGRAM]).
+
+   WebTransport over HTTP/3 relies on the RESET_STREAM_AT frame defined
+   in [RESET-STREAM-AT].  To indicate support, both the client and the
+   server MUST enable the extension as described in Section 3 of
+   [RESET-STREAM-AT].
 
 3.2.  Extended CONNECT in HTTP/3
 
@@ -553,13 +558,13 @@ Table of Contents
                  application errors and HTTP/3 error codes
 
    WebTransport data streams are associated with sessions through a
-   header at the beginning of the stream; resetting a stream may result
-   in that data being discarded.  Because of that, WebTransport
-   application error codes are best effort, as the WebTransport stack is
-   not always capable of associating the reset code with a session.  The
-   only exception is the situation where there is only one session on a
-   given HTTP/3 connection, and no intermediaries between the client and
-   the server.
+   header at the beginning of the stream; resetting a stream might
+   result in that data being discarded when using a RESET_STREAM frame.
+   To prevent this, WebTransport implementations MUST use the
+   RESET_STREAM_AT frame [RESET-STREAM-AT] with a Reliable Size set to
+   at least the size of the WebTransport header when resetting a
+   WebTransport data stream.  This ensures that the ID field associating
+   the data stream with a WebTransport session is always delivered.
 
    WebTransport implementations SHALL forward the error code for a
    stream associated with a known session to the application that owns
@@ -938,6 +943,13 @@ Table of Contents
               Datagram Extension to QUIC", RFC 9221,
               DOI 10.17487/RFC9221, March 2022,
               <https://www.rfc-editor.org/rfc/rfc9221>.
+
+   [RESET-STREAM-AT]
+              Seemann, M. and K. Oku, "QUIC Stream Resets with Partial
+              Delivery", Work in Progress, Internet-Draft, draft-ietf-
+              quic-reliable-stream-reset-06, 28 February 2024,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
+              reliable-stream-reset-06>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
